@@ -1,4 +1,10 @@
-# Data Market AI Agent (Esqueleto)
+# Data Market AI Agent
+
+O objetivo desse projeto é sair de uma única URL (ranking Valor 1000) e contar a história completa de cada empresa em um grafo. A ideia é que os agentes façam o trabalho pesado de pesquisa e interpretação, para que você possa enxergar o ecossistema corporativo de forma viva:
+- Descobrir e enriquecer informações básicas e de presença digital (site, LinkedIn, endereços, CNPJs, descrição) sem preenchimento manual.
+- Mapear quem é quem: holdings, participações, marcas e subempresas (ex.: StoneCo → Stone, PagarMe, Ton, Linx), investidores e relações de capital.
+- Classificar produtos/serviços mesmo com termos diferentes (gateway, adquirência, orquestração) e agrupar ofertas similares.
+- Preencher o grafo (Neo4j por padrão) com nós e relações que revelem conexões, correlações e insights de grupo econômico.
 
 Arquitetura inicial em MVC + agentes para orquestrar coleta, enriquecimento e escrita em Graph Database, partindo exclusivamente da URL base do ranking Valor 1000.
 
@@ -69,4 +75,3 @@ O comando executa: scraping da URL oficial, enriquecimento (LLM + busca) e escri
 ### Usar Agno (orquestração de agentes)
 - Instale dependência `agno` (já listada em `requirements.txt`).
 - Se Agno estiver disponível e `OPENAI_API_KEY` setado, o `OrchestratorAgent` usará o agente Agno; caso contrário, faz fallback para o caminho simples.
-
