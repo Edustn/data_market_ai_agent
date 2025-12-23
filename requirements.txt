@@ -1,0 +1,6 @@
+beautifulsoup4
+requests
+neo4j
+python-dotenv
+openai>=1.51.0
+agno
