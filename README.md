@@ -86,3 +86,6 @@ O comando executa: scraping da URL oficial, enriquecimento (LLM + busca) e escri
 - Correlações entre empresas/marcas (relations em meta): `MATCH (c:Company)-[r:RELATED_TO|SIMILAR_TO|OWNS|GROUP_WITH]->(t) RETURN c.name, type(r), labels(t), t.name LIMIT 20;`
 - Similaridade por produto: `MATCH (c1:Company)-[:SIMILAR_TO {basis:'product_category'}]->(c2) RETURN c1.name, c2.name, r.shared_categories LIMIT 10;`
 - Similaridade por setor: `MATCH (c1:Company)-[:SIMILAR_TO {basis:'sector'}]->(c2) RETURN c1.name, c2.name LIMIT 10;`
+
+## Demonstração da solução: 
+Link: [https://drive.google.com/file/d/1DqoB-nhyd_wlkwlfeF47ReZnX2Y_simY/view?usp=sharing](https://drive.google.com/file/d/1DqoB-nhyd_wlkwlfeF47ReZnX2Y_simY/view?usp=sharing)
