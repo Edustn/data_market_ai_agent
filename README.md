@@ -75,3 +75,11 @@ O comando executa: scraping da URL oficial, enriquecimento (LLM + busca) e escri
 ### Usar Agno (orquestração de agentes)
 - Instale dependência `agno` (já listada em `requirements.txt`).
 - Se Agno estiver disponível e `OPENAI_API_KEY` setado, o `OrchestratorAgent` usará o agente Agno; caso contrário, faz fallback para o caminho simples.
+
+## Consultas Cypher úteis
+- Empresas com website preenchido: `MATCH (c:Company) WHERE c.website IS NOT NULL RETURN c.name, c.website LIMIT 10;`
+- Marcas por empresa: `MATCH (c:Company)-[:OPERATES_AS]->(b:Brand) RETURN c.name, collect(b.name) AS marcas LIMIT 10;`
+- Holding e suas empresas: `MATCH (h:Holding)<-[:BELONGS_TO]-(c:Company) RETURN h.name, collect(c.name) AS empresas LIMIT 10;`
+- Produtos oferecidos por empresa: `MATCH (c:Company)-[:OFFERS]->(p:ProductCategory) RETURN c.name, collect(p.name) AS produtos LIMIT 10;`
+- Empresas com LinkedIn preenchido: `MATCH (c:Company) WHERE c.linkedin IS NOT NULL RETURN c.name, c.linkedin LIMIT 10;`
+- Quantidade de nós/arestas por tipo: `MATCH (c:Company) RETURN count(c) AS companies; MATCH (b:Brand) RETURN count(b) AS brands; MATCH (c:Company)-[r:OPERATES_AS]->(b:Brand) RETURN count(r) AS rels;`
