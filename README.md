@@ -8,6 +8,12 @@ O objetivo desse projeto é sair de uma única URL (ranking Valor 1000) e contar
 
 Arquitetura inicial em MVC + agentes para orquestrar coleta, enriquecimento e escrita em Graph Database, partindo exclusivamente da URL base do ranking Valor 1000.
 
+## Organização/Arquitetura
+- MVC: Controllers coordenam fluxo; Models representam domínio (Company, Brand, Holding); Views cuidam de saída (CLI).
+- Services: scraping (Valor1000), enrichment (busca + LLM/Agno), graph (Neo4j).
+- Agents: orquestram buscas temáticas, prompts LLM e fusão dos dados enriquecidos.
+- Pipeline: scrape → enriquecer (busca+LLM) → persistir no grafo → criar relações de similaridade (produtos/setor).
+
 ## Estrutura de pastas
 - `src/app.py`: ponto de entrada orquestrador (CLI).
 - `src/controllers/`: camada de coordenação das ações de scraping, enriquecimento e escrita no grafo.
@@ -36,6 +42,7 @@ Arquitetura inicial em MVC + agentes para orquestrar coleta, enriquecimento e es
 - Nodes: `Company`, `Brand`, `Holding`, `Person` (quando sócios aparecerem), `ProductCategory`.
 - Edges: `OWNS`, `SUBSIDIARY_OF`, `OPERATES_AS`, `INVESTOR_IN`, `SIMILAR_TO`, `OFFERS`.
 - Propriedades mínimas: `name`, `cnpj`, `website`, `linkedin`, `address`, `confidence`, `source`, `last_seen`.
+- Escolha por nós/arestas: usamos grafo porque ele expressa naturalmente interligações (holding ↔ empresas ↔ marcas ↔ produtos ↔ investidores). Em tabelas, isso viraria joins complexos; no grafo, conexões e correlações ficam explícitas e fáceis de consultar.
 
 ## Como rodar
 Pré-requisitos: Python 3.10+, Neo4j acessível (local ou remoto), `.env` preenchido.
@@ -49,22 +56,15 @@ python src/app.py --limit 50
 # Override de Neo4j via CLI (prioridade sobre .env)
 python src/app.py --limit 50 --neo4j-uri=bolt://localhost:7687 --neo4j-user=neo4j --neo4j-password=senha
 
-# Desabilitar cache de HTML
-python src/app.py --limit 50 --no-cache
 ```
 O comando executa: scraping da URL oficial, enriquecimento (LLM + busca) e escrita no Neo4j.
-
-### Cache de scraping
-- O `Valor1000Scraper` usa cache opcional em `src/data/raw/valor1000.html`.
-- Se o arquivo existir, ele é lido; se não existir, a URL é baixada e salva (se `use_cache=True`, default).
-- Para desabilitar o cache via CLI, use `--no-cache`.
 
 ### Ambiente (.env)
 - Copie `.env.example` para `.env` e preencha:
   - `OPENAI_API_KEY`
   - `NEO4J_URI` (ex.: `bolt://localhost:7687`)
   - `NEO4J_USER`, `NEO4J_PASSWORD`
-  - `TAVILY_API_KEY` (opcional; SearchAgent tenta Tavily, senão usa fallback DuckDuckGo sem credenciais)
+  - `TAVILY_API_KEY` 
   - Ajuste outros parâmetros conforme necessário.
 
 ### Configurar LLM (OpenAI)
@@ -83,3 +83,6 @@ O comando executa: scraping da URL oficial, enriquecimento (LLM + busca) e escri
 - Produtos oferecidos por empresa: `MATCH (c:Company)-[:OFFERS]->(p:ProductCategory) RETURN c.name, collect(p.name) AS produtos LIMIT 10;`
 - Empresas com LinkedIn preenchido: `MATCH (c:Company) WHERE c.linkedin IS NOT NULL RETURN c.name, c.linkedin LIMIT 10;`
 - Quantidade de nós/arestas por tipo: `MATCH (c:Company) RETURN count(c) AS companies; MATCH (b:Brand) RETURN count(b) AS brands; MATCH (c:Company)-[r:OPERATES_AS]->(b:Brand) RETURN count(r) AS rels;`
+- Correlações entre empresas/marcas (relations em meta): `MATCH (c:Company)-[r:RELATED_TO|SIMILAR_TO|OWNS|GROUP_WITH]->(t) RETURN c.name, type(r), labels(t), t.name LIMIT 20;`
+- Similaridade por produto: `MATCH (c1:Company)-[:SIMILAR_TO {basis:'product_category'}]->(c2) RETURN c1.name, c2.name, r.shared_categories LIMIT 10;`
+- Similaridade por setor: `MATCH (c1:Company)-[:SIMILAR_TO {basis:'sector'}]->(c2) RETURN c1.name, c2.name LIMIT 10;`
