@@ -28,6 +28,21 @@ class SearchAgent:
                 return results
         return self._search_duckduckgo(query, limit)
 
+    def search_multi(self, base: str, topics: list[str], limit_per_topic: int = 2) -> list[dict[str, Any]]:
+        """Executa buscas temáticas e consolida resultados."""
+        all_results = []
+        seen_urls = set()
+        for topic in topics:
+            q = f"{base} {topic}"
+            results = self.search(q, limit=limit_per_topic) or []
+            for r in results:
+                url = r.get("url")
+                if not url or url in seen_urls:
+                    continue
+                seen_urls.add(url)
+                all_results.append(r)
+        return all_results
+
     def _search_tavily(self, query: str, limit: int) -> list[dict[str, Any]]:
         try:
             resp = requests.post(

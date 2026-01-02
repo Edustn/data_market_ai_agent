@@ -73,7 +73,9 @@ class OrchestratorAgent:
 
     def enrich_company(self, company: Company) -> Company:
         self.view.info(f"Enriquecendo {company.name}")
-        hints = self.search_agent.search(company.name)
+        # Busca temática: tentar capturar marcas, grupo, CNPJ, produtos
+        topics = ["site oficial", "linkedin", "marcas", "subsidiárias", "holding", "grupo econômico", "CNPJ", "produtos", "soluções"]
+        hints = self.search_agent.search_multi(company.name, topics=topics, limit_per_topic=3)
         enriched_data = None
 
         if self.agno_agent:

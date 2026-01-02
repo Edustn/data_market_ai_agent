@@ -21,7 +21,7 @@ class LlmEnricher:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
-                max_tokens=600,
+                max_tokens=900,
                 temperature=0.2,
                 response_format={"type": "json_object"},
             )
@@ -74,5 +74,29 @@ class LlmEnricher:
 
         try:
             return json.loads(content)
-        except Exception:
-            return fallback
+        except Exception as exc:
+            # Tenta corrigir JSON parcial/truncado
+            try:
+                start = content.find("{")
+                end = content.rfind("}")
+                if start != -1 and end != -1:
+                    cleaned = content[start : end + 1]
+                    return json.loads(cleaned)
+            except Exception:
+                pass
+            # Tenta reparar JSON com json_repair, se disponível
+            try:
+                import json_repair
+
+                repaired = json_repair.loads(content)
+                return repaired
+            except Exception:
+                pass
+            if self.view:
+                self.view.warn(f"Falha ao parsear JSON para {fallback.get('name')}: {exc}")
+            # devolve fallback com conteúdo bruto para inspeção
+            fb = dict(fallback)
+            meta = fb.get("meta") or {}
+            meta["_raw_content"] = content
+            fb["meta"] = meta
+            return fb
